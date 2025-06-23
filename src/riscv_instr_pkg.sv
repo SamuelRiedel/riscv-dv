@@ -108,6 +108,8 @@ package riscv_instr_pkg;
     RV64ZBB,
     RV64ZBC,
     RV64ZBS,
+    RV32ZCB,
+    RV64ZCB, 
     RV32X,
     RV64X
   } riscv_instr_group_t;
@@ -271,6 +273,20 @@ package riscv_instr_pkg;
     PACKW,
     PACKUW,
     XPERM_W,
+    // RV32ZCB
+    C_LBU,
+    C_LHU,
+    C_LH,
+    C_SB,
+    C_SH,
+    C_ZEXT_B,
+    C_SEXT_B,
+    C_ZEXT_H,
+    C_SEXT_H,
+    C_NOT,
+    C_MUL,
+    // RV64ZCB instructions
+    C_ZEXT_W,
     // RV32M instructions
     MUL,
     MULH,
@@ -693,6 +709,12 @@ package riscv_instr_pkg;
     CS_FORMAT,
     CSS_FORMAT,
     CIW_FORMAT,
+    // Zc compressed instruction format
+    CLB_FORMAT,
+    CSB_FORMAT,
+    CLH_FORMAT,
+    CSH_FORMAT,
+    CSZN_FORMAT,
     // Vector instruction format
     VSET_FORMAT,
     VA_FORMAT,
@@ -1532,6 +1554,7 @@ package riscv_instr_pkg;
   typedef class riscv_zbb_instr;
   typedef class riscv_zbc_instr;
   typedef class riscv_zbs_instr;
+  typedef class riscv_zcb_instr;
   typedef class riscv_b_instr;
   `include "riscv_instr_gen_config.sv"
   `include "isa/riscv_instr.sv"
@@ -1557,6 +1580,9 @@ package riscv_instr_pkg;
   `include "isa/rv32zbb_instr.sv"
   `include "isa/rv32zbc_instr.sv"
   `include "isa/rv32zbs_instr.sv"
+  `include "isa/riscv_zcb_instr.sv"
+  `include "isa/rv32zcb_instr.sv"
+  `include "isa/rv64zcb_instr.sv"
   `include "isa/rv32m_instr.sv"
   `include "isa/rv64a_instr.sv"
   `include "isa/rv64b_instr.sv"

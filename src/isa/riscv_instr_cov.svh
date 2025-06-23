@@ -408,6 +408,26 @@
         // c.j imm
         get_val(operands[0], imm);
       end
+      CSZN_FORMAT: begin // TODO? Is this correct and the CU format???
+        rs1 = get_gpr(operands[0]);
+        rs1_value = get_gpr_state(operands[0]);
+      end
+      CU_FORMAT: begin // TODO? This is what I think CU is
+        rs1 = get_gpr(operands[1]);
+        rs1_value = get_gpr_state(operands[1]);
+      end
+      CLB_FORMAT, CLH_FORMAT: begin
+        get_val(operands[2], imm);
+        rs1 = get_gpr(operands[1]);
+        rs1_value = get_gpr_state(operands[1]);
+      end
+      CSB_FORMAT, CSH_FORMAT: begin
+        rs2 = get_gpr(operands[0]);
+        rs2_value = get_gpr_state(operands[0]);
+        get_val(operands[2], imm);
+        rs1 = get_gpr(operands[1]);
+        rs1_value = get_gpr_state(operands[1]);
+      end
       default: `uvm_fatal(`gfn, $sformatf("Unsupported format %0s", format))
     endcase
   endfunction : update_src_regs
