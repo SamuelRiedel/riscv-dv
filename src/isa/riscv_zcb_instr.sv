@@ -19,10 +19,6 @@ class riscv_zcb_instr extends riscv_instr;
 
   // This code is based on the frozen v.1.0.1 code reduction specification.
   // Most of the code is copied from the riscv_compressed_instr class.
-  // gcc_support is used to insert instructions as raw data rather than going
-  // through the assembler. The reason being that GCC doesn't have support for
-  // zcb in the major releases yet. Remove the flag once it is supported.
-  int gcc_support = 0; // TODO: We have GCC support now.
 
   constraint rvc_csr_c {
     //  Registers specified by the three-bit rs1’, rs2’, and rd/rs1’
@@ -103,10 +99,6 @@ class riscv_zcb_instr extends riscv_instr;
         asm_str = $sformatf("%0s%0s, %0s", asm_str, rd.name(), rs2.name());
       default: `uvm_info(`gfn, $sformatf("Unsupported format %0s", format.name()), UVM_LOW)
     endcase
-
-    if (!gcc_support) begin
-      asm_str = {convert2bin(".2byte "), " #zcb until official GCC support: ", asm_str};
-    end
 
     if (comment != "")
       asm_str = {asm_str, " #",comment};
