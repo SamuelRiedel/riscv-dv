@@ -80,7 +80,7 @@ package riscv_instr_pkg;
     MACHINE_MODE    = 2'b11
   } privileged_mode_t;
 
-  typedef enum bit [4:0] {
+  typedef enum bit [5:0] {
     RV32I,
     RV64I,
     RV32M,
@@ -109,7 +109,9 @@ package riscv_instr_pkg;
     RV64ZBC,
     RV64ZBS,
     RV32ZCB,
-    RV64ZCB, 
+    RV64ZCB,
+    RV32ZMMUL,
+    RV64ZMMUL,
     RV32X,
     RV64X
   } riscv_instr_group_t;
