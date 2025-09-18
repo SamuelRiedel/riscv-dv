@@ -78,14 +78,15 @@ class riscv_zcmp_instr extends riscv_instr;
 
     if (comment != "")
       asm_str = {asm_str, " #",comment};
+    asm_str = {asm_str, " # ZCMP instruction cm. cm_ "};
     return asm_str.tolower();
   endfunction : convert2asm
 
   // Convert the instruction to binary code
   virtual function string convert2bin(string prefix = "");
     string binary;
+    `uvm_info(`gfn, $sformatf("ZCMP %0s", instr_name), UVM_LOW)
     case (instr_name) inside
-      //`uvm_info(`gfn, $sformatf("rs1 = %0s, imm = %b,
       CM_PUSH:
         binary = $sformatf("0x%4h", {get_func6(), get_func2(), rlist, imm[1:0], get_c_opcode()});
       CM_POP:

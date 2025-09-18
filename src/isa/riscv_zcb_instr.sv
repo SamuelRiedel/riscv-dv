@@ -101,12 +101,14 @@ class riscv_zcb_instr extends riscv_instr;
 
     if (comment != "")
       asm_str = {asm_str, " #",comment};
+    asm_str = {asm_str, " # ZCB instruction c. c_ "};
     return asm_str.tolower();
   endfunction : convert2asm
 
   // Convert the instruction to assembly code
   virtual function string convert2bin(string prefix = "");
     string binary;
+    `uvm_info(`gfn, $sformatf("ZCB %0s", instr_name), UVM_LOW)
     case (instr_name) inside
       //`uvm_info(`gfn, $sformatf("rs1 = %0s, imm = %b,
       C_LBU:
@@ -179,6 +181,7 @@ class riscv_zcb_instr extends riscv_instr;
   endfunction : get_func6
 
   virtual function bit is_supported(riscv_instr_gen_config cfg);
+    `uvm_info(`gfn, "ZCB Check supported", UVM_LOW)
     return (cfg.enable_zcb_extension &&
            // RV32C, RV32Zbb, RV32Zba, M/Zmmul is prerequisites for this extension
           (RV32ZBB inside {supported_isa}) &&
