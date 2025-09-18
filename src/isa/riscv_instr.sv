@@ -67,7 +67,7 @@ class riscv_instr extends uvm_object;
   bit                        has_rs2 = 1'b1;
   bit                        has_rd = 1'b1;
   bit                        has_imm = 1'b1;
-  bit                        has_urlist = 1'b0;
+  bit                        has_rlist = 1'b0;
 
   constraint imm_c {
     if (instr_name inside {SLLIW, SRLIW, SRAIW}) {
@@ -588,9 +588,19 @@ class riscv_instr extends uvm_object;
     return imm_str;
   endfunction
 
-  virtual function string get_urlist();
-    // TODO: Properly format the rlist
-    return $sformatf("%0d", rlist);
+  virtual function string get_rlist();
+    // rlist 0-3 are reserved for future extensions
+    if (rlist < 4 || rlist > 15) begin
+      `uvm_fatal(`gfn, $sformatf("Unsupported rlist: %0d", rlist))
+    end
+    // Handle the specific cases and use a default for the general pattern.
+    case(rlist)
+      4:  return "{ra}";
+      5:  return "{ra, s0}";
+      15: return "{ra, s0-s11}"; // The special case for s10/s11
+      // The default case handles the general pattern for rlist 6 through 14
+      default: return $sformatf("{ra, s0-s%0d}", rlist - 5);
+    endcase
   endfunction
 
   virtual function void clear_unused_label();

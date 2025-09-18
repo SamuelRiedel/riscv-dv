@@ -18,17 +18,20 @@
 class riscv_zcmp_instr extends riscv_instr;
 
   constraint rvc_csr_c {
-    // Registers specified by the three-bit rs1’, rs2’, and rd/rs1’
-    if (format inside {CMMV_FORMAT, CMPP_FORMAT}) {
-      // reuse rs1 for special rd'/rs1' randomize_gpr function makes sure
-      // a reserved register is not used.
-      if (has_rs1) {
-        rs1 inside {[S0:A5]};
-      }
-      if (has_rs2) {
-        rs2 inside {[S0:A5]};
-      }
-      // TODO rlist? Doens't need to be constrained. full range
+    if (format == CMPP_FORMAT) {
+      // rlist can be anything between 4 and 15. 0-3 are reserved for future use.
+      rlist inside {[4:15]};
+    }
+    if (format == CMMV_FORMAT) {
+      // Always has rs1 and rs2 and they must be different
+      rs1 != rs2;
+      // Those instructions use a special encoding, only S0, S1, S2-S7 are allowed
+      // which correspond to x8, x9, x18-x23, so the actual registers used are
+      // {r1sc[2:1]>0,r1sc[2:1]==0,r1sc[2:0]};
+      // So for registers beyond x16 we prepend 0x10 to the three LSB
+      // For the registers x8 and x9 we prepend 0x01 to the three LSB
+      rs1 inside {S0, S1, [S2:S7]};
+      rs2 inside {S0, S1, [S2:S7]};
     }
   }
 
@@ -38,7 +41,7 @@ class riscv_zcmp_instr extends riscv_instr;
     super.new(name);
     rs1 = S0;
     rs2 = S0;
-    // TODO rlist?
+    rlist = 4;
     is_compressed = 1'b1;
   endfunction : new
 
@@ -58,7 +61,7 @@ class riscv_zcmp_instr extends riscv_instr;
         has_rs1 = 1'b0;
         has_rs2 = 1'b0;
         has_rd = 1'b0;
-        has_urlist = 1'b1;
+        has_rlist = 1'b1;
       end
     endcase
   endfunction
