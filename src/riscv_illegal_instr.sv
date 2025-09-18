@@ -243,6 +243,12 @@ class riscv_illegal_instr extends uvm_object;
     }
   }
 
+  constraint zcmp_extension_c {
+    if (RV32ZCMP inside {supported_isa}) {
+      (opcode == 2'b10);
+    }
+  }
+
   constraint illegal_compressed_op_c {
     if (exception == kIllegalCompressedOpcode) {
       c_op != 2'b01;

@@ -45,6 +45,7 @@ class riscv_instr extends uvm_object;
   rand riscv_reg_t           rs1;
   rand riscv_reg_t           rd;
   rand bit [31:0]            imm;
+  rand bit [3:0]             rlist; // TODO Worth a typedef?
 
   // Helper fields
   bit [31:0]                 imm_mask = 32'hFFFF_FFFF;
@@ -66,6 +67,7 @@ class riscv_instr extends uvm_object;
   bit                        has_rs2 = 1'b1;
   bit                        has_rd = 1'b1;
   bit                        has_imm = 1'b1;
+  bit                        has_urlist = 1'b0;
 
   constraint imm_c {
     if (instr_name inside {SLLIW, SRLIW, SRAIW}) {
@@ -111,7 +113,7 @@ class riscv_instr extends uvm_object;
       if (cfg.no_fence && (instr_name inside {FENCE, FENCE_I, SFENCE_VMA})) continue;
       if ((instr_inst.group inside {supported_isa}) &&
           !(cfg.disable_compressed_instr &&
-            (instr_inst.group inside {RV32C, RV64C, RV32DC, RV32FC, RV128C, RV32ZCB, RV64ZCB})) &&
+            (instr_inst.group inside {RV32C, RV64C, RV32DC, RV32FC, RV128C, RV32ZCB, RV64ZCB, RV32ZCMP, RV64ZCMP})) &&
           !(!cfg.enable_floating_point &&
             (instr_inst.group inside {RV32F, RV64F, RV32D, RV64D})) &&
           !(!cfg.enable_vector_extension &&
@@ -584,6 +586,11 @@ class riscv_instr extends uvm_object;
   // Example: %hi(symbol), %pc_rel(label) ...
   virtual function string get_imm();
     return imm_str;
+  endfunction
+
+  virtual function string get_urlist();
+    // TODO: Properly format the rlist
+    return $sformatf("%0d", rlist);
   endfunction
 
   virtual function void clear_unused_label();
