@@ -45,6 +45,7 @@ class riscv_instr extends uvm_object;
   rand riscv_reg_t           rs1;
   rand riscv_reg_t           rd;
   rand bit [31:0]            imm;
+  rand bit [3:0]             urlist; // TODO Worth a typedef?
 
   // Helper fields
   bit [31:0]                 imm_mask = 32'hFFFF_FFFF;
@@ -66,6 +67,7 @@ class riscv_instr extends uvm_object;
   bit                        has_rs2 = 1'b1;
   bit                        has_rd = 1'b1;
   bit                        has_imm = 1'b1;
+  bit                        has_urlist = 1'b0;
 
   constraint imm_c {
     if (instr_name inside {SLLIW, SRLIW, SRAIW}) {
@@ -584,6 +586,11 @@ class riscv_instr extends uvm_object;
   // Example: %hi(symbol), %pc_rel(label) ...
   virtual function string get_imm();
     return imm_str;
+  endfunction
+
+  virtual function string get_urlist();
+    // TODO: Properly format the urlist
+    return $sformatf("%0d", urlist);
   endfunction
 
   virtual function void clear_unused_label();
