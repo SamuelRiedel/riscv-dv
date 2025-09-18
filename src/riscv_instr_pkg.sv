@@ -110,6 +110,8 @@ package riscv_instr_pkg;
     RV64ZBS,
     RV32ZCB,
     RV64ZCB,
+    RV32ZCMP,
+    RV64ZCMP,
     RV32ZMMUL,
     RV64ZMMUL,
     RV32X,
@@ -289,6 +291,13 @@ package riscv_instr_pkg;
     C_MUL,
     // RV64ZCB instructions
     C_ZEXT_W,
+    // RV32ZCMP
+    CM_PUSH,
+    CM_POP,
+    CM_POPRET,
+    CM_POPRETZ,
+    CM_MVA01S,
+    CM_MVSA01,
     // RV32M instructions
     MUL,
     MULH,
@@ -717,6 +726,8 @@ package riscv_instr_pkg;
     CLH_FORMAT,
     CSH_FORMAT,
     CSZN_FORMAT,
+    CMMV_FORMAT,
+    CMPP_FORMAT,
     // Vector instruction format
     VSET_FORMAT,
     VA_FORMAT,
