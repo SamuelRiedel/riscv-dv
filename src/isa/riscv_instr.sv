@@ -603,6 +603,25 @@ class riscv_instr extends uvm_object;
     endcase
   endfunction
 
+  virtual function riscv_reglist_t get_rlist_as_list();
+    case(rlist)
+      4:  return '{RA};
+      5:  return '{RA, S0};
+      6:  return '{RA, S0, S1};
+      7:  return '{RA, S0, S1, S2};
+      8:  return '{RA, S0, S1, S2, S3};
+      9:  return '{RA, S0, S1, S2, S3, S4};
+      10: return '{RA, S0, S1, S2, S3, S4, S5};
+      11: return '{RA, S0, S1, S2, S3, S4, S5, S6};
+      12: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7};
+      13: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7, S8};
+      14: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9};
+      15: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11};
+      default: `uvm_fatal(`gfn, $sformatf("Unsupported rlist: %0d", rlist))
+    endcase
+    return '{};
+  endfunction
+
   virtual function void clear_unused_label();
     if(has_label && !is_branch_target && is_local_numeric_label) begin
       has_label = 1'b0;
@@ -635,6 +654,10 @@ class riscv_instr extends uvm_object;
 
   virtual function void update_imm_str();
     imm_str = $sformatf("%0d", $signed(imm));
+  endfunction
+
+  virtual function int get_imm_val();
+    return $signed(imm);
   endfunction
 
   `include "isa/riscv_instr_cov.svh"

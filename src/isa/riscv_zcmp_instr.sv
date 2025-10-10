@@ -35,6 +35,28 @@ class riscv_zcmp_instr extends riscv_instr;
     }
   }
 
+  // TODO? Where is imm tied to zero somewhere???
+  // constraint imm_c {
+  //   if (format == CMPP_FORMAT) {
+  //     // Within this format, the immediate depends on whether it's a PUSH or POP
+  //     if (instr_name == CM_PUSH) {
+  //       imm inside {-16, -32, -48, -64};
+  //       // --- All PUSH-related constraints go here ---
+  //       // (rlist inside {4, 5, 6, 7})   -> imm inside {-16, -32, -48, -64};
+  //       // (rlist inside {8, 9, 10, 11})  -> imm inside {-32, -48, -64, -80};
+  //       // (rlist inside {12, 13, 14}) -> imm inside {-48, -64, -80, -96};
+  //       // (rlist == 15)                -> imm inside {-64, -80, -96, -112};
+  //     } else {
+  //       imm inside {16, 32, 48, 64};
+  //       // --- All POP-related constraints go here (handles instr_name != CM_PUSH) ---
+  //       // (rlist inside {4, 5, 6, 7})   -> imm inside {16, 32, 48, 64};
+  //       // (rlist inside {8, 9, 10, 11})  -> imm inside {32, 48, 64, 80};
+  //       // (rlist inside {12, 13, 14}) -> imm inside {48, 64, 80, 96};
+  //       // (rlist == 15)                -> imm inside {64, 80, 96, 112};
+  //     }
+  //   }
+  // }
+
   `uvm_object_utils(riscv_zcmp_instr)
 
   function new(string name = "");
@@ -50,6 +72,62 @@ class riscv_zcmp_instr extends riscv_instr;
       imm_len = 2;
     end
   endfunction : set_imm_len
+
+  // Overwrite get_imm to return the immediate string fitting the rlist
+  // TODO, this is a hack because the random constraints don't work yet
+  virtual function int get_imm_val();
+    int options_q[$]; // A queue to hold the 4 valid integer options
+    // Use a case statement to select the correct set of 4 values.
+    case (rlist)
+      4, 5, 6, 7:   options_q = '{16, 32, 48, 64};
+      8, 9, 10, 11: options_q = '{32, 48, 64, 80};
+      12, 13, 14:  options_q = '{48, 64, 80, 96};
+      15:           options_q = '{64, 80, 96, 112};
+      default: options_q = '{};
+    endcase
+    // Randomly select one value from the chosen set.
+    // This code runs after one of the sets above has been chosen.
+    if (options_q.size() == 0) begin
+      // This case will be hit if the rlist was an unsupported value.
+      `uvm_error("get_imm", $sformatf("Unsupported rlist value: %0d for instr %s",
+                                      rlist, instr_name.name()));
+      return 0; // Return a default value on error.
+    end else begin
+      // int rand_idx     = $urandom_range(options_q.size() - 1);
+      int rand_idx     = 0; // TODO: Hardcode to zero because we need to have a constant value
+      int selected_imm = options_q[rand_idx];
+      selected_imm = instr_name == CM_PUSH ? -selected_imm : selected_imm;
+      return selected_imm;
+    end
+  endfunction
+
+  // Overwrite get_imm to return the immediate string fitting the rlist
+  // TODO, this is a hack because the random constraints don't work yet
+  virtual function string get_imm();
+    int options_q[$]; // A queue to hold the 4 valid integer options
+    // Use a case statement to select the correct set of 4 values.
+    case (rlist)
+      4, 5, 6, 7:   options_q = '{16, 32, 48, 64};
+      8, 9, 10, 11: options_q = '{32, 48, 64, 80};
+      12, 13, 14:  options_q = '{48, 64, 80, 96};
+      15:           options_q = '{64, 80, 96, 112};
+      default: options_q = '{};
+    endcase
+    // Randomly select one value from the chosen set.
+    // This code runs after one of the sets above has been chosen.
+    if (options_q.size() == 0) begin
+      // This case will be hit if the rlist was an unsupported value.
+      `uvm_error("get_imm", $sformatf("Unsupported rlist value: %0d for instr %s",
+                                      rlist, instr_name.name()));
+      return "0"; // Return a default value on error.
+    end else begin
+      // int rand_idx     = $urandom_range(options_q.size() - 1);
+      int rand_idx     = 0; // TODO: Hardcode to zero because we need to have a constant value
+      int selected_imm = options_q[rand_idx];
+      selected_imm = instr_name == CM_PUSH ? -selected_imm : selected_imm;
+      return $sformatf("%0d", selected_imm);
+    end
+  endfunction
 
   virtual function void set_rand_mode();
     case (format) inside

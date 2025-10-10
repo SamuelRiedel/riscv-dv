@@ -119,8 +119,9 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
 
   // Generate each load/store instruction
   virtual function void gen_load_store_instr();
-    bit enable_compressed_load_store, enable_zcb;
+    bit enable_compressed_load_store, enable_zcb, enable_zcmp;
     riscv_instr instr;
+    riscv_reglist_t push_list;
     randomize_avail_regs();
     if ((rs1_reg inside {[S0 : A5], SP}) && !cfg.disable_compressed_instr) begin
       enable_compressed_load_store = 1;
@@ -128,6 +129,10 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
     if ((RV32C inside {riscv_instr_pkg::supported_isa}) &&
         (RV32ZCB inside {riscv_instr_pkg::supported_isa} && cfg.enable_zcb_extension)) begin
       enable_zcb = 1;
+    end
+    if ((RV32C inside {riscv_instr_pkg::supported_isa}) &&
+        (RV32ZCMP inside {riscv_instr_pkg::supported_isa} && cfg.enable_zcmp_extension)) begin
+      enable_zcmp = 1;
     end
     foreach (addr[i]) begin
       // Assign the allowed load/store instructions based on address alignment
@@ -151,6 +156,14 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
           allowed_instr = {LW, SW, allowed_instr};
           if (cfg.enable_floating_point) begin
             allowed_instr = {FLW, FSW, allowed_instr};
+          end
+          if((offset[i] % 4 == 0) && enable_zcmp && enable_compressed_load_store) begin
+          // if(enable_zcmp && enable_compressed_load_store) begin
+            if (rs1_reg == SP) begin
+              `uvm_info(`gfn, "Add ZCMP push/pop allowed instr", UVM_LOW)
+              // allowed_instr = {CM_PUSH, CM_POP, CM_POPRETZ, CM_POPRET, allowed_instr};
+              // allowed_instr = {CM_POP, allowed_instr};
+            end
           end
           if((offset[i] inside {[0:127]}) && (offset[i] % 4 == 0) &&
              (RV32C inside {riscv_instr_pkg::supported_isa}) &&
@@ -216,6 +229,72 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
       instr.rs1 = rs1_reg;
       instr.imm_str = $sformatf("%0d", $signed(offset[i]));
       instr.process_load_store = 0;
+      // Add initialization for PUSH/POP instructions
+      begin
+        case (instr.instr_name)
+          CM_PUSH: begin
+            // This is a store-multiple instruction.
+            // Initialize the source registers before the push.
+            `uvm_info(`gfn, $sformatf("Initializing GPRs for CM_PUSH: %s",
+                      instr.convert2asm()), UVM_LOW)
+            // For each register in the push list, load it with a random value.
+            push_list = instr.get_rlist_as_list();
+            foreach (push_list[j]) begin
+              riscv_pseudo_instr li_instr = riscv_pseudo_instr::type_id::create("li_instr");
+              `DV_CHECK_RANDOMIZE_WITH_FATAL(li_instr,
+                 pseudo_instr_name == LI;
+                 rd == push_list[j];
+              )
+              li_instr.imm_str = $sformatf("0x%x", $urandom());
+              instr_list.push_back(li_instr);
+            end
+          end
+          CM_POP, CM_POPRETZ, CM_POPRET: begin
+            // This is a load-multiple instruction.
+            // Initialize memory with data before the pop.
+            riscv_reg_t temp_gpr;
+            riscv_reg_t excluded_regs[$];
+            int current_offset;
+            int reg_size_in_bytes = (XLEN/8);
+
+            `uvm_info(`gfn, $sformatf("Initializing memory for %s: %s",
+                      instr.instr_name.name(), instr.convert2asm()), UVM_LOW)
+
+            // Store a unique random value to each memory location that will be popped.
+            // current_offset = $signed(offset[i]);
+            current_offset = instr.get_imm_val() - reg_size_in_bytes;
+
+            push_list = instr.get_rlist_as_list();
+            foreach (push_list[j]) begin
+              riscv_pseudo_instr li_instr;
+              riscv_instr store_instr;
+
+              // // Load a random value into the temp GPR.
+              // li_instr = riscv_pseudo_instr::type_id::create("li_instr");
+              // `DV_CHECK_RANDOMIZE_WITH_FATAL(li_instr,
+              //    pseudo_instr_name == LI;
+              //    rd == temp_gpr;
+              // )
+              // // Use a distinct value for each memory slot to aid debugging.
+              // li_instr.imm_str = $sformatf("0x%x", $urandom() ^ j);
+              // instr_list.push_back(li_instr);
+
+              // Store the value from temp_gpr to the stack.
+              store_instr = riscv_instr::get_instr(XLEN == 32 ? SW : SD);
+              `DV_CHECK_RANDOMIZE_WITH_FATAL(store_instr,
+                 rs1 == rs1_reg;  // Base address is SP
+                 rs2 == push_list[j];
+              )
+              store_instr.imm_str = $sformatf("%0d", current_offset);
+              store_instr.process_load_store = 0; // Let the core simulator handle it
+              instr_list.push_back(store_instr);
+
+              // Increment the offset for the next register store.
+              current_offset -= reg_size_in_bytes;
+            end
+          end
+        endcase
+      end
       instr_list.push_back(instr);
       load_store_instr.push_back(instr);
     end
