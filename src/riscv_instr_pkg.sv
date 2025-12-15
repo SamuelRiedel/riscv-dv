@@ -716,7 +716,7 @@ package riscv_instr_pkg;
     CSB_FORMAT,
     CLH_FORMAT,
     CSH_FORMAT,
-    CSZN_FORMAT,
+    CU_FORMAT,
     // Vector instruction format
     VSET_FORMAT,
     VA_FORMAT,

@@ -22,7 +22,7 @@ class riscv_zcb_instr extends riscv_instr;
 
   constraint rvc_csr_c {
     //  Registers specified by the three-bit rs1’, rs2’, and rd/rs1’
-    if (format inside {CLB_FORMAT, CSB_FORMAT, CLH_FORMAT, CSH_FORMAT, CSZN_FORMAT, CA_FORMAT}) {
+    if (format inside {CLB_FORMAT, CSB_FORMAT, CLH_FORMAT, CSH_FORMAT, CU_FORMAT, CA_FORMAT}) {
       if (has_rs1) {
         rs1 inside {[S0:A5]};
       }
@@ -33,8 +33,8 @@ class riscv_zcb_instr extends riscv_instr;
         rd inside {[S0:A5]};
       }
     }
-    // CSZN_FORMAT and CA_FORMAT has rd == rs1
-    if (format inside {CSZN_FORMAT, CA_FORMAT}) {
+    // CU_FORMAT and CA_FORMAT has rd == rs1
+    if (format inside {CU_FORMAT, CA_FORMAT}) {
       if (has_rd && has_rs1) {
         rd == rs1;
       }
@@ -73,7 +73,7 @@ class riscv_zcb_instr extends riscv_instr;
       CSH_FORMAT: begin
         has_rd = 1'b0;
       end
-      CSZN_FORMAT: begin
+      CU_FORMAT: begin
         has_rs2 = 1'b0;
         has_imm = 1'b0;
       end
@@ -93,7 +93,7 @@ class riscv_zcb_instr extends riscv_instr;
         asm_str = $sformatf("%0s%0s, %0s(%0s)", asm_str, rd.name(), get_imm(), rs1.name());
       CSB_FORMAT, CSH_FORMAT:
         asm_str = $sformatf("%0s%0s, %0s(%0s)", asm_str, rs2.name(), get_imm(), rs1.name());
-      CSZN_FORMAT:
+      CU_FORMAT:
         asm_str = $sformatf("%0s%0s", asm_str, rs1.name);
       CA_FORMAT:
         asm_str = $sformatf("%0s%0s, %0s", asm_str, rd.name(), rs2.name());
@@ -195,7 +195,7 @@ class riscv_zcb_instr extends riscv_instr;
   // For coverage
   virtual function void update_src_regs(string operands[$]);
     case(format)
-      CSZN_FORMAT: begin
+      CU_FORMAT: begin
         rs1 = get_gpr(operands[0]);
         rs1_value = get_gpr_state(operands[0]);
       end

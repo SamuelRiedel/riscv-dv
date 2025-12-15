@@ -408,7 +408,7 @@
         // c.j imm
         get_val(operands[0], imm);
       end
-      CSZN_FORMAT: begin
+      CU_FORMAT: begin
         rs1 = get_gpr(operands[0]);
         rs1_value = get_gpr_state(operands[0]);
       end
