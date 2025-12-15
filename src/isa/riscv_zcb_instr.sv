@@ -23,8 +23,6 @@ class riscv_zcb_instr extends riscv_instr;
   constraint rvc_csr_c {
     //  Registers specified by the three-bit rs1’, rs2’, and rd/rs1’
     if (format inside {CLB_FORMAT, CSB_FORMAT, CLH_FORMAT, CSH_FORMAT, CSZN_FORMAT, CA_FORMAT}) {
-      // reuse rs1 for special rd'/rs1' randomize_gpr function makes sure
-      // a reserved register is not used.
       if (has_rs1) {
         rs1 inside {[S0:A5]};
       }
@@ -33,6 +31,12 @@ class riscv_zcb_instr extends riscv_instr;
       }
       if (has_rd) {
         rd inside {[S0:A5]};
+      }
+    }
+    // CSZN_FORMAT and CA_FORMAT has rd == rs1
+    if (format inside {CSZN_FORMAT, CA_FORMAT}) {
+      if (has_rd && has_rs1) {
+        rd == rs1;
       }
     }
   }
@@ -57,27 +61,23 @@ class riscv_zcb_instr extends riscv_instr;
 
   virtual function void set_rand_mode();
     case (format) inside
-      CLB_FORMAT : begin
+      CLB_FORMAT: begin
         has_rs2 = 1'b0;
       end
-      C_SB : begin
+      CSB_FORMAT: begin
         has_rd = 1'b0;
       end
-      C_LHU, C_LH : begin
+      CLH_FORMAT: begin
         has_rs2 = 1'b0;
       end
-      C_SH : begin
+      CSH_FORMAT: begin
         has_rd = 1'b0;
       end
-      C_ZEXT_B, C_ZEXT_H, C_SEXT_B, C_SEXT_H, C_ZEXT_W : begin
-        // Similar to CB format, where rs/rd is shared. When randomizing GPRs
-        // don't allow rd in rs1.
-        has_rd = 1'b0;
+      CSZN_FORMAT: begin
         has_rs2 = 1'b0;
         has_imm = 1'b0;
       end
-      CA_FORMAT : begin
-        has_rs1 = 1'b0;
+      CA_FORMAT: begin
         has_imm = 1'b0;
       end
       default: `uvm_info(`gfn, $sformatf("Unsupported format %0s", format.name()), UVM_LOW)
@@ -211,7 +211,9 @@ class riscv_zcb_instr extends riscv_instr;
         rs1 = get_gpr(operands[1]);
         rs1_value = get_gpr_state(operands[1]);
       end
-      CSZN_FORMAT: begin
+      CA_FORMAT: begin
+        rs2 = get_gpr(operands[1]);
+        rs2_value = get_gpr_state(operands[1]);
         rs1 = get_gpr(operands[0]);
         rs1_value = get_gpr_state(operands[0]);
       end
